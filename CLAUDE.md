@@ -19,7 +19,7 @@ Ask before adding a new dependency.
 Run these from within a frontend directory (`recipe-lab/web` or `my-app`). Run `npm install` first: `recipe-lab/web` has no `node_modules` yet.
 
 
-No test runner is configured in any package yet.
+Tests: web uses Vitest (`src/**/*.test.tsx`) and Playwright (`e2e/`); api uses Vitest + Supertest (`src/**/*.test.ts`). The api runs on port 3001 and `web` proxies `/api` to it in dev.
 
 ## TypeScript / lint notes
 
