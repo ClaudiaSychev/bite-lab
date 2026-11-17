@@ -24,6 +24,10 @@ model Recipe {
   versions           RecipeVersion[] @relation("RecipeVersions")
   publishedVersionId String?         @unique
   publishedVersion   RecipeVersion?  @relation("PublishedVersion", fields: [publishedVersionId], references: [id])
+  // Public URL /r/:slug. Assigned on first publish and kept, so republishing reuses the same link.
+  slug               String?         @unique
+  // When the current version was published; null while unpublished.
+  publishedAt        DateTime?
 
   @@index([userId])
 }

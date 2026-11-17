@@ -9,7 +9,10 @@ function Home() {
       <p className="mt-2 text-gray-600">Draft recipes, save versions, publish.</p>
       <nav className="mt-6 flex gap-4 text-sm underline">
         {status === 'authenticated' ? (
-          <Link to="/recipes">My recipes</Link>
+          <>
+            <Link to="/recipes">My recipes</Link>
+            <Link to="/published">My published recipes</Link>
+          </>
         ) : (
           <>
             <Link to="/login">Log in</Link>

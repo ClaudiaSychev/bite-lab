@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { useAuth } from '../auth/auth-context.ts'
 import { createRecipe, deleteRecipe, listInProgressRecipes, type RecipeSummary } from '../recipes/api.ts'
 import RecipeCard from '../recipes/RecipeCard.tsx'
@@ -63,6 +63,9 @@ function Recipes() {
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">My recipes</h1>
         <div className="flex items-center gap-4">
+          <Link to="/published" className="text-sm underline">
+            My published recipes
+          </Link>
           <button type="button" onClick={handleLogout} className="text-sm underline">
             Log out
           </button>

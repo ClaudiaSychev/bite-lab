@@ -13,6 +13,8 @@ export interface Recipe extends RecipeSummary {
   notes: string
   createdAt: string
   publishedVersionId: string | null
+  slug: string | null
+  publishedAt: string | null
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -101,5 +103,60 @@ export async function restoreVersion(recipeId: string, versionId: string): Promi
   const { recipe } = await request<{ recipe: Recipe }>(`${versionsPath(recipeId, versionId)}/restore`, {
     method: 'POST',
   })
+  return recipe
+}
+
+export interface Publication {
+  publishedVersionId: string
+  slug: string
+  publishedAt: string
+}
+
+export interface PublishedRecipeSummary {
+  id: string
+  slug: string
+  publishedAt: string
+  // Title of the published version, which may differ from the draft's.
+  title: string
+  version: { id: string; version: number; label: string | null }
+}
+
+export interface PublicRecipe {
+  slug: string
+  title: string
+  author: string
+  publishedAt: string
+  ingredients: Ingredient[]
+  instructions: Instruction[]
+  notes: string
+}
+
+export function publicRecipePath(slug: string): string {
+  return `/r/${encodeURIComponent(slug)}`
+}
+
+export async function publishVersion(recipeId: string, versionId: string): Promise<Publication> {
+  const { publication } = await request<{ publication: Publication }>(
+    `/api/recipes/${encodeURIComponent(recipeId)}/publish`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ versionId }),
+    },
+  )
+  return publication
+}
+
+export function unpublishRecipe(recipeId: string): Promise<void> {
+  return request<void>(`/api/recipes/${encodeURIComponent(recipeId)}/publish`, { method: 'DELETE' })
+}
+
+export async function listPublishedRecipes(): Promise<PublishedRecipeSummary[]> {
+  const { recipes } = await request<{ recipes: PublishedRecipeSummary[] }>('/api/recipes/published')
+  return recipes
+}
+
+export async function getPublicRecipe(slug: string): Promise<PublicRecipe> {
+  const { recipe } = await request<{ recipe: PublicRecipe }>(`/api/public/recipes/${encodeURIComponent(slug)}`)
   return recipe
 }

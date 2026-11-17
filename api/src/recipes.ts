@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { currentUser, requireAuth } from './auth.ts'
 import { prisma } from './db.ts'
 import { parseDraftUpdate, parseTitle } from './draft.ts'
+import { addPublishingRoutes } from './publishing.ts'
 import { versionsRouter } from './versions.ts'
 
 const DEFAULT_TITLE = 'Untitled recipe'
@@ -40,6 +41,9 @@ recipesRouter.post('/', async (req, res) => {
   })
   res.status(201).json({ recipe })
 })
+
+// Registered before GET /:id so "/published" isn't read as a recipe id.
+addPublishingRoutes(recipesRouter)
 
 // Other users' recipes answer 404, not 403, so their existence isn't revealed.
 recipesRouter.get('/:id', async (req, res) => {

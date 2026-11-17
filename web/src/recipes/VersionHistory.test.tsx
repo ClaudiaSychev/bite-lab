@@ -14,6 +14,7 @@ const props = {
   loadError: null,
   saveBlockedReason: null,
   viewingId: null,
+  publishedVersionId: null,
   compareIds: [],
   onSave: () => Promise.reject(new Error('unused')),
   onView: noop,
@@ -42,6 +43,12 @@ describe('VersionHistory', () => {
     const html = renderToString(<VersionHistory {...props} saveBlockedReason="Fix the highlighted fields." />)
     expect(html).toMatch(/<button type="submit" disabled=""/)
     expect(html).toContain('Fix the highlighted fields.')
+  })
+
+  it('marks the published version', () => {
+    const html = renderToString(<VersionHistory {...props} publishedVersionId="a" />)
+    expect(html.match(/>Published</g)).toHaveLength(1)
+    expect(html.indexOf('>Published<')).toBeGreaterThan(html.indexOf('v1 · first try'))
   })
 
   it('invites saving the first version when there are none', () => {

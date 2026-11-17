@@ -10,6 +10,8 @@ const recipe: Recipe = {
   createdAt: '2026-11-06T12:00:00Z',
   versionCount: 0,
   publishedVersionId: null,
+  slug: null,
+  publishedAt: null,
   ingredients: [
     { id: 'a', name: 'flour', quantity: { type: 'single', value: 1.5 }, unit: 'cup', note: '' },
     { id: 'b', name: 'milk', quantity: { type: 'range', min: 1, max: 2 }, unit: 'cup', note: '' },

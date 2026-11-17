@@ -1,5 +1,6 @@
 import express from 'express'
 import { authRouter, loadUser } from './auth.ts'
+import { publicRouter } from './publishing.ts'
 import { recipesRouter } from './recipes.ts'
 
 export function createApp() {
@@ -13,6 +14,7 @@ export function createApp() {
 
   app.use('/api/auth', authRouter)
   app.use('/api/recipes', recipesRouter)
+  app.use('/api/public', publicRouter)
 
   return app
 }

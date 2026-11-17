@@ -8,6 +8,7 @@ interface VersionHistoryProps {
   // Why saving is blocked right now, e.g. the draft has invalid fields.
   saveBlockedReason: string | null
   viewingId: string | null
+  publishedVersionId: string | null
   compareIds: readonly string[]
   onSave: (label: string) => Promise<VersionSummary>
   onView: (versionId: string) => void
@@ -22,6 +23,7 @@ function VersionHistory({
   loadError,
   saveBlockedReason,
   viewingId,
+  publishedVersionId,
   compareIds,
   onSave,
   onView,
@@ -116,13 +118,18 @@ function VersionHistory({
                     <button
                       type="button"
                       onClick={() => onView(v.id)}
-                      aria-label={`View ${name}`}
+                      aria-label={`View ${name}${publishedVersionId === v.id ? ' (published)' : ''}`}
                       aria-current={viewingId === v.id ? 'true' : undefined}
                       className="min-w-0 flex-1 text-left"
                     >
                       <span className="block truncate text-sm font-medium underline-offset-2 hover:underline">
                         {name}
                       </span>
+                      {publishedVersionId === v.id && (
+                        <span className="mt-0.5 inline-block rounded bg-green-100 px-1.5 text-xs font-medium text-green-800">
+                          Published
+                        </span>
+                      )}
                       <time dateTime={v.createdAt} className="block text-xs text-gray-500">
                         {formatLastEdited(v.createdAt)}
                       </time>

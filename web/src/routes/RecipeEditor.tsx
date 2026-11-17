@@ -4,7 +4,10 @@ import {
   createVersion,
   getRecipe,
   listVersions,
+  publicRecipePath,
+  publishVersion,
   restoreVersion,
+  unpublishRecipe,
   updateRecipe,
   type RecipeVersion,
   type VersionSummary,
@@ -36,6 +39,9 @@ function RecipeEditor({ id }: { id: string }) {
   const [versionsError, setVersionsError] = useState<string | null>(null)
   const [compareIds, setCompareIds] = useState<string[]>([])
   const [notice, setNotice] = useState<string | null>(null)
+  const [publication, setPublication] = useState<{ versionId: string; slug: string } | null>(null)
+  const [unpublishing, setUnpublishing] = useState(false)
+  const [publishError, setPublishError] = useState<string | null>(null)
   // ?version=<id> shows one version read-only; ?compare=<id>,<id> compares two. Neither: the editable draft.
   const [searchParams, setSearchParams] = useSearchParams()
   const viewingId = searchParams.get('version')
@@ -45,7 +51,11 @@ function RecipeEditor({ id }: { id: string }) {
     let cancelled = false
     getRecipe(id).then(
       (recipe) => {
-        if (!cancelled) setDraft(draftFromRecipe(recipe))
+        if (cancelled) return
+        setDraft(draftFromRecipe(recipe))
+        if (recipe.publishedVersionId && recipe.slug) {
+          setPublication({ versionId: recipe.publishedVersionId, slug: recipe.slug })
+        }
       },
       (err: unknown) => {
         if (!cancelled) setLoadError(err instanceof Error ? err.message : 'Could not load recipe')
@@ -145,6 +155,27 @@ function RecipeEditor({ id }: { id: string }) {
 
   const closeVersionView = () => setSearchParams({})
 
+  async function publish(version: RecipeVersion) {
+    const result = await publishVersion(id, version.id)
+    setPublishError(null)
+    setPublication({ versionId: result.publishedVersionId, slug: result.slug })
+  }
+
+  async function unpublish() {
+    setUnpublishing(true)
+    setPublishError(null)
+    try {
+      await unpublishRecipe(id)
+      setPublication(null)
+    } catch (err) {
+      setPublishError(err instanceof Error ? err.message : 'Could not unpublish recipe')
+    } finally {
+      setUnpublishing(false)
+    }
+  }
+
+  const publishedVersion = publication ? versions?.find((v) => v.id === publication.versionId) : undefined
+
   const errors = validation && !validation.ok ? validation.errors : { amounts: {} }
   const statusText = invalid ? 'Not saved: fix the highlighted fields' : STATUS_TEXT[saveStatus]
 
@@ -162,6 +193,30 @@ function RecipeEditor({ id }: { id: string }) {
           {statusText}
         </p>
       </div>
+
+      {publication && (
+        <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded border border-green-300 bg-green-50 px-4 py-2 text-sm text-green-900">
+          <span>
+            Published{publishedVersion ? ` ${formatVersionName(publishedVersion)}` : ''} at{' '}
+            <Link to={publicRecipePath(publication.slug)} className="font-mono underline">
+              {publicRecipePath(publication.slug)}
+            </Link>
+          </span>
+          <button
+            type="button"
+            onClick={() => void unpublish()}
+            disabled={unpublishing}
+            className="ml-auto text-sm text-red-700 underline disabled:opacity-50"
+          >
+            {unpublishing ? 'Unpublishing…' : 'Unpublish'}
+          </button>
+        </div>
+      )}
+      {publishError && (
+        <p role="alert" className="mt-2 text-sm text-red-600">
+          {publishError}
+        </p>
+      )}
 
       {loadError && (
         <p role="alert" className="mt-6 text-red-600">
@@ -187,6 +242,8 @@ function RecipeEditor({ id }: { id: string }) {
                 versionId={viewingId}
                 onClose={closeVersionView}
                 onRestore={restore}
+                publishedVersionId={publication?.versionId ?? null}
+                onPublish={publish}
               />
             ) : (
               <form className="flex flex-col gap-8" onSubmit={(e) => e.preventDefault()}>
@@ -245,6 +302,7 @@ function RecipeEditor({ id }: { id: string }) {
             loadError={versionsError}
             saveBlockedReason={invalid ? 'Fix the highlighted fields before saving a version.' : null}
             viewingId={viewingId}
+            publishedVersionId={publication?.versionId ?? null}
             compareIds={compareIds}
             onSave={saveVersion}
             onView={showVersion}
