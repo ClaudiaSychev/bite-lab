@@ -1,0 +1,69 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "ts"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// The working draft. Editable; saving a version snapshots it into RecipeVersion.
+model Recipe {
+  id                 String          @id @default(cuid())
+  userId             String
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title              String
+  // JSON shapes are validated by src/draft.ts: Ingredient[] and Instruction[].
+  ingredients        Json            @default("[]")
+  instructions       Json            @default("[]")
+  notes              String          @default("")
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  versions           RecipeVersion[] @relation("RecipeVersions")
+  publishedVersionId String?         @unique
+  publishedVersion   RecipeVersion?  @relation("PublishedVersion", fields: [publishedVersionId], references: [id])
+
+  @@index([userId])
+}
+
+// Immutable snapshot of a Recipe. Never update a row; save a new version instead.
+model RecipeVersion {
+  id           String   @id @default(cuid())
+  recipeId     String
+  recipe       Recipe   @relation("RecipeVersions", fields: [recipeId], references: [id], onDelete: Cascade)
+  version      Int
+  // Optional name the cook gives the snapshot, e.g. "less sugar".
+  label        String?
+  title        String
+  ingredients  Json
+  instructions Json
+  notes        String   @default("")
+  createdAt    DateTime @default(now())
+  publishedFor Recipe?  @relation("PublishedVersion")
+
+  @@unique([recipeId, version])
+}
+
+model User {
+  id           String    @id @default(cuid())
+  // Stored lowercased so uniqueness is case-insensitive.
+  username     String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  sessions     Session[]
+  recipes      Recipe[]
+}
+
+// The cookie holds a random token; only its SHA-256 hash is stored.
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
